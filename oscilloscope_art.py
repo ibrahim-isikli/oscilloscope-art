@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Oscilloscope Art - Text Generator
-==================================
-Draws text on an oscilloscope screen using XY mode.
+Oscilloscope Art - Shapes & Emoji
+===================================
+Draws geometric shapes on an oscilloscope screen using XY mode.
 
 Requirements:
     pip install matplotlib numpy
@@ -19,13 +19,11 @@ Oscilloscope settings:
 
 import numpy as np
 import wave
-from matplotlib.textpath import TextPath
-from matplotlib.font_manager import FontProperties
 
 SAMPLE_RATE = 44100
 
-# --- Change this to your name ---
-YOUR_NAME = "ibrahim"
+# --- Pick which shapes to generate ---
+SHAPES = ["heart", "star", "smiley"]
 
 
 def normalize(arr, scale=0.90):
@@ -44,31 +42,60 @@ def arc_resample(x, y, n):
     return np.interp(t, cum, x), np.interp(t, cum, y)
 
 
-def text_xy(text, n=2048):
-    fp = FontProperties(family="DejaVu Sans", weight="bold")
-    tp = TextPath((0, 0), text, size=10, prop=fp)
-    polys = tp.to_polygons()
+def heart_xy(n=1024):
+    t = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    x = 16 * np.sin(t) ** 3
+    y = 13 * np.cos(t) - 5 * np.cos(2*t) - 2 * np.cos(3*t) - np.cos(4*t)
+    return normalize(x), normalize(y)
 
-    if not polys:
-        raise RuntimeError("Could not render text: " + repr(text))
 
-    xs, ys = [], []
-    for i, p in enumerate(polys):
-        if len(p) < 2:
-            continue
-        closed = np.vstack([p, p[0]])
-        xs.append(closed[:, 0])
-        ys.append(closed[:, 1])
-        if i < len(polys) - 1:
-            nxt = polys[i + 1]
-            bx = np.linspace(closed[-1, 0], nxt[0, 0], 6)
-            by = np.linspace(closed[-1, 1], nxt[0, 1], 6)
-            xs.append(bx)
-            ys.append(by)
+def star_xy(n=1024, spikes=5):
+    angles = np.linspace(0, 2 * np.pi, 2 * spikes, endpoint=False) - np.pi / 2
+    radii = np.tile([1.0, 0.38], spikes)
+    vx = radii * np.cos(angles)
+    vy = radii * np.sin(angles)
+    vx = np.append(vx, vx[0])
+    vy = np.append(vy, vy[0])
+    return arc_resample(normalize(vx), normalize(vy), n)
 
-    x = normalize(np.concatenate(xs))
-    y = normalize(np.concatenate(ys))
-    return arc_resample(x, y, n)
+
+def smiley_xy(n=2048):
+    t = np.linspace(0, 2 * np.pi, 400, endpoint=False)
+
+    # face circle
+    fx, fy = np.cos(t), np.sin(t)
+
+    # left eye
+    lx = -0.32 + 0.10 * np.cos(t)
+    ly =  0.30 + 0.10 * np.sin(t)
+
+    # right eye
+    rx =  0.32 + 0.10 * np.cos(t)
+    ry =  0.30 + 0.10 * np.sin(t)
+
+    # smile arc (bottom half)
+    ts = np.linspace(np.pi + 0.35, 2 * np.pi - 0.35, 300)
+    sx = 0.52 * np.cos(ts)
+    sy = 0.52 * np.sin(ts) + 0.10
+
+    def bridge(ax, ay, bx, by, steps=8):
+        return np.linspace(ax, bx, steps), np.linspace(ay, by, steps)
+
+    bx1, by1 = bridge(fx[-1], fy[-1], lx[0], ly[0])
+    bx2, by2 = bridge(lx[-1], ly[-1], rx[0], ry[0])
+    bx3, by3 = bridge(rx[-1], ry[-1], sx[0], sy[0])
+
+    all_x = np.concatenate([fx, bx1, lx, bx2, rx, bx3, sx])
+    all_y = np.concatenate([fy, by1, ly, by2, ry, by3, sy])
+
+    return arc_resample(normalize(all_x), normalize(all_y), n)
+
+
+SHAPE_FN = {
+    "heart":  heart_xy,
+    "star":   star_xy,
+    "smiley": smiley_xy,
+}
 
 
 def save_wav(x, y, path, duration=10.0):
@@ -95,7 +122,11 @@ def save_wav(x, y, path, duration=10.0):
 
 
 if __name__ == "__main__":
-    print(f"Generating '{YOUR_NAME}'...")
-    x, y = text_xy(YOUR_NAME)
-    save_wav(x, y, f"{YOUR_NAME}.wav")
-    print("Done! Play the WAV file while your oscilloscope is in XY mode.")
+    for name in SHAPES:
+        if name not in SHAPE_FN:
+            print(f"Unknown shape: {name}. Choose from: {list(SHAPE_FN)}")
+            continue
+        print(f"Generating '{name}'...")
+        x, y = SHAPE_FN[name]()
+        save_wav(x, y, f"{name}.wav")
+    print("Done! Play the WAV files while your oscilloscope is in XY mode.")
