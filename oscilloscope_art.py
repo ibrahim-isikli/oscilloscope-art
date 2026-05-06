@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Oscilloscope Art - Text Generator
-==================================
-Draws text on an oscilloscope screen using XY mode.
+Oscilloscope Art - Lyrics
+==========================
+Scrolls song lyrics phrase by phrase on an oscilloscope in XY mode.
 
 Requirements:
     pip install matplotlib numpy
@@ -24,8 +24,37 @@ from matplotlib.font_manager import FontProperties
 
 SAMPLE_RATE = 44100
 
-# --- Change this to your name ---
-YOUR_NAME = "ibrahim"
+# ---------------------------------------------------------------
+# Edit LYRICS below. Each item is either:
+#   "phrase"           -> shown for SECONDS_PER_LINE seconds
+#   ("phrase", 2.5)    -> shown for 2.5 seconds (custom timing)
+#
+# Keep phrases short (2-4 words) for best readability.
+# ---------------------------------------------------------------
+
+LYRICS = [
+    ("Flashing", 2.5),
+    ("lights",   2.5),
+    ("Flashing", 2.5),
+    ("lights",   2.5),
+    ("Flashing", 2.5),
+    ("lights",   2.5),
+    ("Flashing", 2.5),
+    ("lights",   2.5),
+    "She don't",
+    "believe",
+    "in shootin'",
+    "stars",
+    "But she",
+    "believe",
+    "shoes and cars",
+    "Wood floors",
+    "new apartment",
+    "Couture",
+    "departments",
+]
+
+SECONDS_PER_LINE = 1.5   # default duration for lines without custom timing
 
 
 def normalize(arr, scale=0.90):
@@ -44,7 +73,13 @@ def arc_resample(x, y, n):
     return np.interp(t, cum, x), np.interp(t, cum, y)
 
 
-def text_xy(text, n=2048):
+def auto_n(text):
+    return int(np.clip(len(text) * 220, 768, 2048))
+
+
+def text_xy(text, n=None):
+    if n is None:
+        n = auto_n(text)
     fp = FontProperties(family="DejaVu Sans", weight="bold")
     tp = TextPath((0, 0), text, size=10, prop=fp)
     polys = tp.to_polygons()
@@ -71,16 +106,35 @@ def text_xy(text, n=2048):
     return arc_resample(x, y, n)
 
 
-def save_wav(x, y, path, duration=10.0):
+def xy_to_samples(x, y, duration):
     n_samples = int(duration * SAMPLE_RATE)
     reps = -(-n_samples // len(x))
     xf = np.tile(x, reps)[:n_samples]
     yf = np.tile(y, reps)[:n_samples]
+    return xf, yf
 
-    xi = (np.clip(xf, -1, 1) * 32767).astype(np.int16)
-    yi = (np.clip(yf, -1, 1) * 32767).astype(np.int16)
 
-    stereo = np.empty(2 * n_samples, dtype=np.int16)
+def build_lyrics_wav(phrases, default_dur, path):
+    BLANK = int(0.25 * SAMPLE_RATE)   # short blank between phrases
+
+    all_x, all_y = [], []
+
+    for i, item in enumerate(phrases):
+        phrase, dur = (item[0], item[1]) if isinstance(item, tuple) else (item, default_dur)
+        print(f"  [{i+1}/{len(phrases)}] {phrase!r}  ({dur}s)")
+        x, y = text_xy(phrase)
+        xf, yf = xy_to_samples(x, y, dur)
+        all_x.append(xf)
+        all_y.append(yf)
+        all_x.append(np.zeros(BLANK))
+        all_y.append(np.zeros(BLANK))
+
+    x_full = np.concatenate(all_x)
+    y_full = np.concatenate(all_y)
+
+    xi = (np.clip(x_full, -1, 1) * 32767).astype(np.int16)
+    yi = (np.clip(y_full, -1, 1) * 32767).astype(np.int16)
+    stereo = np.empty(2 * len(xi), dtype=np.int16)
     stereo[0::2] = xi
     stereo[1::2] = yi
 
@@ -90,12 +144,11 @@ def save_wav(x, y, path, duration=10.0):
         f.setframerate(SAMPLE_RATE)
         f.writeframes(stereo.tobytes())
 
-    hz = SAMPLE_RATE / len(x)
-    print(f"Saved: {path}  ({hz:.1f} Hz refresh, {duration:.0f}s)")
+    total = len(x_full) / SAMPLE_RATE
+    print(f"Saved: {path}  ({len(phrases)} phrases, {total:.1f}s total)")
 
 
 if __name__ == "__main__":
-    print(f"Generating '{YOUR_NAME}'...")
-    x, y = text_xy(YOUR_NAME)
-    save_wav(x, y, f"{YOUR_NAME}.wav")
-    print("Done! Play the WAV file while your oscilloscope is in XY mode.")
+    print("Generating lyrics WAV...")
+    build_lyrics_wav(LYRICS, SECONDS_PER_LINE, "lyrics.wav")
+    print("Done! Play lyrics.wav while your oscilloscope is in XY mode.")
