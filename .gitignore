@@ -1,7 +1,4 @@
 *.wav
-*.jpeg
-*.jpg
-*.png
 __pycache__/
 *.pyc
 osiloskop_sanat.py
