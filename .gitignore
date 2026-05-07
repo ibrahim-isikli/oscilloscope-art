@@ -1,4 +1,5 @@
 *.wav
+!example/*.wav
 __pycache__/
 *.pyc
 osiloskop_sanat.py
