@@ -70,6 +70,13 @@ https://github.com/user-attachments/assets/00360586-cccb-4211-9686-81e6a21e5f9a
 
 ---
 
+## Inspiration
+
+- [Oscilloscope Art from Your Browser](https://hackaday.com/2018/02/01/oscilloscope-art-from-your-browser/) — Hackaday
+- [Oscilloscope Music](https://neil.fraser.name/news/2018/01/25/) — Neil Fraser
+
+---
+
 ## Contribute your own lyrics
 
 1. Fork this repo
