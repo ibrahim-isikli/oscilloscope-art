@@ -4,6 +4,8 @@ Draw text and shapes on your oscilloscope screen using XY mode and your PC's aud
 
 No extra hardware needed — just an AUX cable and a 3.5mm adapter.
 
+![Example](assets/example.jpeg)
+
 ---
 
 ## How it works
@@ -18,12 +20,16 @@ In XY mode, an oscilloscope uses two input channels as X and Y axes instead of v
 - 3.5mm stereo AUX cable
 - 3.5mm to BNC adapter **or** probe clips touching the AUX jack directly
 
+![Cable](assets/cable.jpeg)
+
 Wiring:
 ```
 AUX Tip   (left)  --> CH1  (X axis)
 AUX Ring  (right) --> CH2  (Y axis)
 AUX Sleeve        --> GND on both channels
 ```
+
+![Connection](assets/connection.jpeg)
 
 ---
 
@@ -53,6 +59,14 @@ This generates a `.wav` file. Play it from any audio player while your oscillosc
 | `main` | Draws your name as text on the screen |
 | `emoji` | Draws shapes — heart, star, smiley face |
 | `lyrics` | Scrolls song lyrics phrase by phrase |
+
+### Shapes (emoji branch)
+
+![Emoji Example](assets/emoji_example.jpeg)
+
+### Lyrics (lyrics branch)
+
+<video src="assets/lyrics_example.mp4" controls width="600"></video>
 
 ---
 
