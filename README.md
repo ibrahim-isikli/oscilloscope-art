@@ -66,7 +66,10 @@ This generates a `.wav` file. Play it from any audio player while your oscillosc
 
 ### Lyrics (lyrics branch)
 
-<video src="assets/lyrics_example.mp4" controls width="600"></video>
+
+
+https://github.com/user-attachments/assets/00360586-cccb-4211-9686-81e6a21e5f9a
+
 
 ---
 
